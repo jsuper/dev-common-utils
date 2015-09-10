@@ -1,28 +1,36 @@
 package org.tony.solr;
 
-import org.tony.solr.annotations.CompositeSolrField;
+import org.tony.solr.annotations.BasicField;
+import org.tony.solr.annotations.CompositeField;
+import org.tony.solr.annotations.DynamicField;
 import org.tony.solr.annotations.PostHandler;
-import org.tony.solr.annotations.SingleSolrField;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Tony
  * @date 2015/9/9
  */
 public class Person {
-  @SingleSolrField(name = "name")
+  @BasicField(name = "name")
   private String name;
-  @SingleSolrField
+
+  @BasicField(name = "age")
   private int age;
 
   private String email;
 
   private String nickName;
 
-  @CompositeSolrField(prefix = "book")
+  @CompositeField(prefix = "book")
   private Book allBooks;
 
+  @DynamicField(prefix = "score")
+  private Map<String, Integer> score;
 
-  @SingleSolrField(name = "email")
+
+  @BasicField(name = "email")
   @PostHandler(handler = SolrPostHandlerTest.class)
   public String getEmail() {
     return "a@b.com";
@@ -32,7 +40,7 @@ public class Person {
     this.email = email;
   }
 
-  @SingleSolrField
+  @BasicField(name = "nickName")
   public String getNickName() {
     return "nick_" + name;
   }
@@ -61,6 +69,14 @@ public class Person {
     this.allBooks = allBooks;
   }
 
+  public Map<String, Integer> getScore() {
+    return score;
+  }
+
+  public void setScore(Map<String, Integer> score) {
+    this.score = score;
+  }
+
   public static void main(String[] args) {
     BeanConverter bc = new BeanConverter();
     Book book = new Book();
@@ -70,8 +86,14 @@ public class Person {
     sat.setAge(10);
     sat.setName("Lucene");
     sat.setAllBooks(book);
+    Map<String, Integer> scores = new HashMap<>();
+    scores.put("total", 100);
+    scores.put("avag", 88);
+    sat.setScore(scores);
+    long s = System.currentTimeMillis();
     SolrDocument sd = bc.toSolrDocument(sat, SolrDocument.class);
-    System.out.println(sd);
+    long end = System.currentTimeMillis();
+    System.out.println("time: " + (end - s) + ", doc: " + sd);
 
     Person sat1 = bc.toBean(sd, Person.class);
     System.out.println(sat1);

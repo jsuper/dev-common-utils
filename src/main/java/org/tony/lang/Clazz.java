@@ -3,6 +3,10 @@ package org.tony.lang;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Tony
@@ -88,5 +92,29 @@ public final class Clazz {
     }
     field.set(bean, value);
     field.setAccessible(acc);
+  }
+
+
+  /**
+   * Get all declared accessible objects of class.
+   *
+   * @param clazz
+   * @return Unmodifiable list
+   */
+  public static List<AccessibleObject> getAccessibleObject(Class<?> clazz) {
+    if (clazz == null) {
+      return Collections.emptyList();
+    }
+    Field[] fields = clazz.getDeclaredFields();
+    Method[] methods = clazz.getDeclaredMethods();
+
+    List<AccessibleObject> accessibleObjects = new ArrayList<>(fields.length + methods.length + 1);
+    for (Field field : fields) {
+      accessibleObjects.add(field);
+    }
+    for (Method method : methods) {
+      accessibleObjects.add(method);
+    }
+    return Collections.unmodifiableList(accessibleObjects);
   }
 }

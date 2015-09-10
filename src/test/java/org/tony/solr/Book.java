@@ -1,15 +1,18 @@
 package org.tony.solr;
 
-import org.tony.solr.annotations.SingleSolrField;
+import org.tony.solr.annotations.BasicField;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * @author Tony
  * @date 2015/9/9
  */
 public class Book {
-  @SingleSolrField
+  @BasicField(name = "id")
   private int id;
-  @SingleSolrField
+  @BasicField(name = "name")
   private String name;
 
   public int getId() {

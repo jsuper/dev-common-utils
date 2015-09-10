@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface CompositeSolrField {
+public @interface CompositeField {
 
   /**
    * composite solr field prefix
@@ -21,4 +21,6 @@ public @interface CompositeSolrField {
    * @return
    */
   String prefix();
+
+  String joinChar() default "_";
 }

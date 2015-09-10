@@ -15,7 +15,7 @@ import static java.lang.annotation.ElementType.METHOD;
  */
 @Target({FIELD, METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface SingleSolrField {
+public @interface BasicField {
 
-  String name() default "";
+  String name();
 }
