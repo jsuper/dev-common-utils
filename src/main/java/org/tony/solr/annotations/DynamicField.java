@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Dynamic solr field. The target type should be subtype of {@link Iterable}
+ * Dynamic solr field. Only support for Map
  *
  * @author Tony
  * @date 2015/9/9
@@ -23,20 +23,6 @@ public @interface DynamicField {
   String prefix();
 
   String joinChar() default "_";
-
-  /**
-   * Method name which retrieve the key
-   *
-   * @return
-   */
-  String key() default "getKey";
-
-  /**
-   * Method name which retrieve the value of the key
-   *
-   * @return
-   */
-  String val() default "getValue";
 
   /**
    * Handler for each value

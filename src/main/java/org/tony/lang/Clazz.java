@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -117,4 +118,34 @@ public final class Clazz {
     }
     return Collections.unmodifiableList(accessibleObjects);
   }
+
+  public static Method getSetterByGetter(Method getter, Class beanClass) {
+    Method setter = null;
+    String getterName = getter.getName();
+    if (getterName.startsWith("get")) {
+      String fieldName = getterName.substring(3);
+      //      fieldName = fieldName.substring(0, 1).toU() + fieldName.substring(1);
+
+      try {
+        setter = beanClass.getDeclaredMethod("set" + fieldName, getter.getReturnType());
+      } catch (NoSuchMethodException e) {
+        fieldName = getterName.substring(0, 1).toUpperCase() + getterName.substring(1);
+        try {
+          setter = beanClass.getDeclaredMethod("set" + fieldName, getter.getReturnType());
+        } catch (NoSuchMethodException e1) {
+          setter = null;
+        }
+      }
+    } else {
+      String setterName =
+              "set" + getterName.substring(0, 1).toUpperCase() + getterName.substring(1);
+      try {
+        setter = beanClass.getDeclaredMethod(setterName, getter.getReturnType());
+      } catch (NoSuchMethodException e) {
+        setter = null;
+      }
+    }
+    return setter;
+  }
+
 }

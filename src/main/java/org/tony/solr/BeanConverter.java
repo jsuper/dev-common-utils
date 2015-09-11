@@ -25,6 +25,7 @@ import java.util.*;
 public class BeanConverter {
 
   private String setField = "setField";
+  private static final Map<Class, Class> implement = new HashMap<>();
   private static final Set<Class<?>> solrFields = new HashSet<>();
 
   {
@@ -32,6 +33,13 @@ public class BeanConverter {
     solrFields.add(CompositeField.class);
     solrFields.add(DynamicField.class);
   }
+
+  {
+    implement.put(Set.class, HashSet.class);
+    implement.put(List.class, ArrayList.class);
+    implement.put(Collection.class, ArrayList.class);
+  }
+
 
 
   private static final boolean isSolrField(AccessibleObject ao) {
@@ -125,17 +133,12 @@ public class BeanConverter {
           Class<?> entryHandler =
                   dynamicField.handler() == Void.class ? null : dynamicField.handler();
           String method = dynamicField.method();
-          Iterable<?> iterableValue;
           if (value instanceof Map) {
-            iterableValue = ((Map) value).entrySet();
-          } else {
-            iterableValue = (Iterable<?>) value;
-          }
-          if (iterableValue != null) {
             Method applyMethod = null;
-            Iterator<?> valueIterator = iterableValue.iterator();
-            while (valueIterator.hasNext()) {
-              Object entry = valueIterator.next();
+            Map actualValue = (Map) value;
+            Iterator<Map.Entry> iterator = actualValue.entrySet().iterator();
+            while (iterator.hasNext()) {
+              Map.Entry entry = iterator.next();
               if (entryHandler != null) {
                 if (applyMethod == null) {
                   try {
@@ -146,34 +149,24 @@ public class BeanConverter {
                 }
                 if (method != null) {
                   try {
-                    entry = applyMethod.invoke(null, entry, from);
+                    entry = (Map.Entry) applyMethod.invoke(null, entry, from);
                   } catch (IllegalAccessException | InvocationTargetException e) {
                     throw new RuntimeException("Apply handler method on DynamicField failed", e);
                   }
                 }
               }
-              Object key;
-              Object keyValue;
               try {
-                if (value instanceof Map) {
-                  //special handle for Map. Cannot access the key an value via reflection
-                  key = ((Map.Entry) entry).getKey();
-                  keyValue = ((Map.Entry) entry).getValue();
-                } else {
-                  Method getKey = entry.getClass().getDeclaredMethod(dynamicField.key(), null);
-                  Method getValue = entry.getClass().getDeclaredMethod(dynamicField.val(), null);
-                  key = getKey.invoke(entry);
-                  keyValue = getValue.invoke(entry);
-                }
-                setFieldMethod
-                        .invoke(docInstance, dynamicField.prefix() + dynamicField.joinChar() + key,
-                                keyValue);
-              } catch (Exception e) {
+                setFieldMethod.invoke(docInstance,
+                        dynamicField.prefix() + dynamicField.joinChar() + entry.getKey(),
+                        entry.getValue());
+              } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException("Handle dynamic field error!", e);
               }
             }
+          } else {
+            throw new IllegalArgumentException(
+                    "DynamicField only support type of Map or its subclass!");
           }
-
         }
       }
     }
@@ -326,7 +319,7 @@ public class BeanConverter {
         DynamicField dynamicField;
         CompositeField compositeField;
         String fieldPrefix;
-        Class<?> valueType = isField ? ((Field) ao).getType() : ((Method) ao).getReturnType();
+        Class valueType = isField ? ((Field) ao).getType() : ((Method) ao).getReturnType();
         if (isCompositeField) {
           compositeField = Clazz.getAnnotation(ao, CompositeField.class);
           fieldPrefix = compositeField.prefix() + compositeField.joinChar();
@@ -342,15 +335,122 @@ public class BeanConverter {
           }
         }
 
+        Map<String, Object> fieldValues = new HashMap<>();
+        for (String field : fieldNames) {
+          try {
+            Object fieldValue = getFieldValue.invoke(solrDocument, field);
+            if (fieldValue != null) {
+              fieldValues.put(field, fieldValue);
+            }
+          } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+          }
+        }
+
         if (isDynamicField) {
-
+          Object dynamicFieldValue;
+          if (Map.class.isAssignableFrom(valueType)) {
+            Map value = new HashMap();
+            for (String field : fieldValues.keySet()) {
+              String fieldName = field.substring(fieldPrefix.length());
+              Object fieldVal = fieldValues.get(field);
+              if (fieldVal != null) {
+                value.put(fieldName, fieldVal);
+              }
+            }
+            dynamicFieldValue = value;
+            //<editor-fold desc="Not support for other type">
+          /*} else if (implement.containsKey(valueType)) {
+            Class container = implement.get(valueType);
+            if (container != null) {
+              try {
+                Collection o = (Collection) container.newInstance();
+                Class<T> genClassType =
+                        (Class<T>) ((ParameterizedType) valueType.getGenericSuperclass())
+                                .getActualTypeArguments()[0];
+                Method setKey = genClassType.getDeclaredMethod("setKey", String.class);
+                Method setValue = genClassType.getDeclaredMethod("setValue", Object.class);
+                for (String field : fieldValues.keySet()) {
+                  String fieldName = field.substring(fieldPrefix.length());
+                  try {
+                    Object fieldValue = fieldValues.get(field);
+                    if (fieldValue != null) {
+                      T innerBean = genClassType.newInstance();
+                      setKey.invoke(innerBean, fieldName);
+                      setValue.invoke(innerBean, fieldValue);
+                      o.add(innerBean);
+                    }
+                  } catch (IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                  }
+                }
+                dynamicFieldValue = o;
+              } catch (InstantiationException | IllegalAccessException e) {
+                e.printStackTrace();
+              } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+              }
+            }*/
+            //</editor-fold>
+          } else {
+            throw new RuntimeException("Dynamic field must be subclass of Map");
+          }
+          if (dynamicFieldValue != null) {
+            try {
+              if (isField) {
+                Clazz.setValue(returnBean, (Field) ao, dynamicFieldValue);
+              } else {
+                Method writeMethod = Clazz.getSetterByGetter((Method) ao, beanClass);
+                if (writeMethod != null) {
+                  writeMethod.invoke(returnBean, dynamicFieldValue);
+                }
+              }
+            } catch (IllegalAccessException | InvocationTargetException e) {
+              e.printStackTrace();
+            }
+          }
         } else {
+          Object solrDoc = null;
+          Method setFieldMethod = null;
+          try {
+            solrDoc = solrDocument.getClass().newInstance();
+            setFieldMethod =
+                    solrDocument.getClass().getDeclaredMethod(setField, String.class, Object.class);
+          } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException("InstantiationException", e);
+          } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+          }
+          if (solrDoc != null && setFieldMethod != null) {
+            for (String key : fieldValues.keySet()) {
+              String fieldName = key.substring(fieldPrefix.length());
+              Object value = fieldValues.get(key);
+              try {
+                setFieldMethod.invoke(solrDoc, fieldName, value);
+              } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+              }
+            }
 
+            //for composite filed, convert these values to given composite bean, then set value to
+            //that field
+            Object innerBean = toBean(solrDoc, valueType);
+            try {
+              if (isField) {
+                Clazz.setValue(returnBean, (Field) ao, innerBean);
+              } else {
+                Method writeMethod = Clazz.getSetterByGetter((Method) ao, beanClass);
+                if (writeMethod != null) {
+                  writeMethod.invoke(returnBean, innerBean);
+                }
+              }
+            } catch (IllegalAccessException | InvocationTargetException e) {
+              e.printStackTrace();
+            }
+          }
         }
       }
     }
-
-
 
     return returnBean;
   }

@@ -45,6 +45,10 @@ public class Person {
     return "nick_" + name;
   }
 
+  public void setNickName(String nickName) {
+    this.nickName = nickName;
+  }
+
   public String getName() {
     return name + "1";
   }
@@ -112,6 +116,8 @@ public class Person {
     sb.append(", age=").append(age);
     sb.append(", email='").append(email).append('\'');
     sb.append(",nickName='").append(nickName).append("'");
+    sb.append(",scores='").append(score).append("'");
+    sb.append(",allBooks='").append(allBooks).append("'");
     sb.append('}');
     return sb.toString();
   }
