@@ -1,4 +1,4 @@
-package org.tony.solr;
+package org.tony.common.solr;
 
 import java.util.HashMap;
 import java.util.Map;

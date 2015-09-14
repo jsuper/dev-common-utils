@@ -1,9 +1,9 @@
-package org.tony.solr;
+package org.tony.common.solr;
 
-import org.tony.solr.annotations.BasicField;
-import org.tony.solr.annotations.CompositeField;
-import org.tony.solr.annotations.DynamicField;
-import org.tony.solr.annotations.PostHandler;
+import org.tony.common.solr.annotations.PostHandler;
+import org.tony.common.solr.annotations.BasicField;
+import org.tony.common.solr.annotations.CompositeField;
+import org.tony.common.solr.annotations.DynamicField;
 
 import java.util.HashMap;
 import java.util.Map;

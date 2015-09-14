@@ -1,4 +1,4 @@
-package org.tony.solr.annotations;
+package org.tony.common.solr.annotations;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

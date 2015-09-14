@@ -1,4 +1,4 @@
-package org.tony.solr.exceptions;
+package org.tony.common.solr.exceptions;
 
 /**
  * @author Tony

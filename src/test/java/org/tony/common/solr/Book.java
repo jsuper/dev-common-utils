@@ -1,9 +1,6 @@
-package org.tony.solr;
+package org.tony.common.solr;
 
-import org.tony.solr.annotations.BasicField;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import org.tony.common.solr.annotations.BasicField;
 
 /**
  * @author Tony

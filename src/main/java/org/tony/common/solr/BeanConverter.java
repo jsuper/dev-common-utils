@@ -1,13 +1,13 @@
-package org.tony.solr;
+package org.tony.common.solr;
 
-import org.tony.lang.Clazz;
-import org.tony.solr.annotations.BasicField;
-import org.tony.solr.annotations.CompositeField;
-import org.tony.solr.annotations.DynamicField;
-import org.tony.solr.annotations.PostHandler;
-import org.tony.solr.exceptions.ValueAccessException;
-import org.tony.solr.exceptions.ValueProcessException;
-import org.tony.solr.exceptions.ValueSetException;
+import org.tony.common.solr.annotations.CompositeField;
+import org.tony.common.solr.annotations.PostHandler;
+import org.tony.common.solr.exceptions.ValueProcessException;
+import org.tony.common.lang.Clazz;
+import org.tony.common.solr.annotations.BasicField;
+import org.tony.common.solr.annotations.DynamicField;
+import org.tony.common.solr.exceptions.ValueAccessException;
+import org.tony.common.solr.exceptions.ValueSetException;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
