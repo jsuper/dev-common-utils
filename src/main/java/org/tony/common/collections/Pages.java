@@ -24,20 +24,16 @@ public final class Pages {
       return;
     }
     Iterator iterator = iterable.iterator();
-    if (!iterator.hasNext()) {
-      return;
-    }
-    int count = 0;
-    List page = new ArrayList(pageSize);
+    List page = null;
     while (iterator.hasNext()) {
+      if (page == null) {
+        page = new ArrayList();
+      }
       page.add(iterator.next());
-      count++;
-      if (count == pageSize || (!iterator.hasNext() && page.size() > 0)) {
+      if (page.size() == pageSize || (!iterator.hasNext() && page.size() > 0)) {
         processor.process(page);
         page.clear();
-        count = 0;
       }
-
     }
   }
 }
